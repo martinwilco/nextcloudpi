@@ -18,7 +18,7 @@ NCPCFG=etc/ncp.cfg
 
 echo -e "\e[1m\n[ Build NCP ${BNAME} ]\e[0m"
 
-IMG="${IMG:-NextCloudPi_${BNAME}_$( date  "+%m-%d-%y" ).img}"
+IMG="${IMG:-NextcloudPi_${BNAME}_$( date  "+%m-%d-%y" ).img}"
 IMG=tmp/"$IMG"
 TAR=output/"$( basename "$IMG" .img ).tar.bz2"
 
@@ -31,7 +31,7 @@ prepare_dirs                   # tmp cache output
 
 # get latest armbian
 [[ -d armbian ]] || {
-  git clone --branch v23.11 https://github.com/armbian/build armbian
+  git clone --depth 1 --branch v24.02 https://github.com/armbian/build armbian
 }
 #( cd armbian && git pull --ff-only --tags && git checkout v23.02 )
 #sed -i -e '/export rootfs_size=/s/du -sm/du --apparent-size -sm/' armbian/lib/functions/image/partitioning.sh
@@ -57,7 +57,6 @@ KERNEL_CONFIGURE=prebuilt
 BUILD_DESKTOP=no
 BUILD_MINIMAL=yes
 USE_CCACHE=yes
-DOCKER_EXTRA_ARGS+=()
 INCLUDE_HOME_DIR=yes
 EOF
 [[ "$CLEAN" == "0" ]] && {

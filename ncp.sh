@@ -22,7 +22,7 @@ install()
 {
   # NCP-CONFIG
   apt-get update
-  $APTINSTALL git dialog whiptail jq file lsb-release
+  $APTINSTALL git dialog whiptail jq file lsb-release tmux
   mkdir -p "$CONFDIR" "$BINDIR"
 
   # This has changed, pi user no longer exists by default, the user needs to create it with Raspberry Pi imager
@@ -70,63 +70,11 @@ EOF
 </Directory>
 EOF
 
-  cat > /etc/apache2/sites-available/ncp.conf <<EOF
-Listen 4443
-<VirtualHost _default_:4443>
-  DocumentRoot /var/www/ncp-web
-  SSLEngine on
-  SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem
-  SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-  <IfModule mod_headers.c>
-    Header always set Strict-Transport-Security "max-age=15768000; includeSubDomains"
-  </IfModule>
-
-  # 2 days to avoid very big backups requests to timeout
-  TimeOut 172800
-
-  <IfModule mod_authnz_external.c>
-    DefineExternalAuth pwauth pipe /usr/sbin/pwauth
-  </IfModule>
-
-</VirtualHost>
-<Directory /var/www/ncp-web/>
-
-  AuthType Basic
-  AuthName "ncp-web login"
-  AuthBasicProvider external
-  AuthExternal pwauth
-
-  SetEnvIf Request_URI "^" noauth
-  SetEnvIf Request_URI "^index\.php$" !noauth
-  SetEnvIf Request_URI "^/$" !noauth
-  SetEnvIf Request_URI "^/wizard/index.php$" !noauth
-  SetEnvIf Request_URI "^/wizard/$" !noauth
-
-  <RequireAll>
-
-   <RequireAny>
-      Require host localhost
-      Require local
-      Require ip 192.168
-      Require ip 172
-      Require ip 10
-      Require ip fe80::/10
-      Require ip fd00::/8
-   </RequireAny>
-
-   <RequireAny>
-      Require env noauth
-      Require user $WEBADMIN
-   </RequireAny>
-
-  </RequireAll>
-
-</Directory>
-EOF
+  install_template apache2/ncp.conf.sh /etc/apache2/sites-available/ncp.conf --defaults
 
   $APTINSTALL libapache2-mod-authnz-external pwauth
   a2enmod authnz_external authn_core auth_basic
-  a2dissite nextcloud
+  a2dissite 001-nextcloud
   a2ensite ncp-activation
 
   ## NCP USER FOR AUTHENTICATION
@@ -134,7 +82,7 @@ EOF
   echo -e "$WEBPASSWD\n$WEBPASSWD" | passwd "$WEBADMIN"
   is_docker || is_lxc || {
     chsh -s /usr/sbin/nologin "$WEBADMIN"
-    chsh -s /usr/sbin/nologin root
+    passwd -l root
   }
 
   ## NCP LAUNCHER
@@ -296,6 +244,10 @@ EOF
 #!/bin/bash
 /usr/local/bin/ncp-check-updates
 EOF
+
+    echo '
+NCP is not activated yet. Please enter https://nextcloudpi.local or this instance'"'"'s local IP address in your webbrowser to complete activation. You can find detailed instructions at https://nextcloudpi.com/activate
+' >> /etc/issue
     chmod a+x /etc/update-motd.d/*
 
     ## HOSTNAME AND mDNS

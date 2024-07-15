@@ -29,8 +29,8 @@ install()
   $APTINSTALL lbzip2 iputils-ping jq wget
   # NOTE: php-smbclient in sury but not in Debian sources, we'll use the binary version
   # https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/external_storage/smb.html
-  $APTINSTALL -t $RELEASE smbclient exfat-fuse exfat-utils                      # for external storage
-  $APTINSTALL -t $RELEASE exfat-fuse exfat-utils                                # for external storage
+  $APTINSTALL -t $RELEASE smbclient exfat-fuse exfatprogs                      # for external storage
+  $APTINSTALL -t $RELEASE exfat-fuse exfatprogs                                # for external storage
   $APTINSTALL -t $RELEASE php${PHPVER}-exif                                     # for gallery
   $APTINSTALL -t $RELEASE php${PHPVER}-bcmath                                   # for LDAP
   $APTINSTALL -t $RELEASE php${PHPVER}-gmp                                      # for bookmarks
@@ -194,11 +194,11 @@ EOF
 
 ## SET APACHE VHOST
   echo "Setting up Apache..."
-  install_template nextcloud.conf.sh /etc/apache2/sites-available/nextcloud.conf --allow-fallback || {
+  install_template nextcloud.conf.sh /etc/apache2/sites-available/001-nextcloud.conf --allow-fallback || {
       echo "ERROR: Parsing template failed. Nextcloud will not work."
       exit 1
   }
-  a2ensite nextcloud
+  a2ensite 001-nextcloud
 
   cat > /etc/apache2/sites-available/000-default.conf <<'EOF'
 <VirtualHost _default_:80>
